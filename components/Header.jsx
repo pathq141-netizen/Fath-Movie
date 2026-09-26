@@ -76,7 +76,7 @@ export default function Header() {
             <source srcSet="/FathMovie.png" type="image/png" />
             <img src="/FathMovie.png" alt="FathMovie Logo" className="brand-logo-img glow-pulse" width="32" height="32" />
           </picture>
-          <span>Movie<span className="logo-tag">Nas</span></span>
+          <span>Fath<span className="logo-tag">Movie</span></span>
         </Link>
 
         <ul className={`nav-links ${mobileMenuOpen ? 'mobile-open' : ''}`} id="navLinks">
