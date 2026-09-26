@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <!-- Disable Zoom In and Zoom Out as requested -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+  <title><%= typeof pageTitle !== 'undefined' ? pageTitle : 'FathMovie — Nonton Film & Series Subtitle Indonesia Gratis' %></title>
+  <meta name="description" content="<%= typeof metaDescription !== 'undefined' ? metaDescription : 'Streaming film & series kualitas 360p-1080p dengan subtitle Indonesia lengkap tanpa buffering di FathMovie.' %>" />
+  
+  <% 
+    const defaultOgImage = 'https://www.gobox.my.id/file/swLU7OEx9HJk.png';
+    const currentOgImage = (typeof ogImage !== 'undefined' && ogImage && ogImage !== '/placeholder.jpg') ? ogImage : defaultOgImage;
+  %>
+  <!-- OpenGraph / Social Media SEO Tags (Rendered from Server!) -->
+  <meta property="og:site_name" content="FathMovie" />
+  <meta property="og:type" content="<%= typeof ogType !== 'undefined' ? ogType : 'website' %>" />
+  <meta property="og:title" content="<%= typeof pageTitle !== 'undefined' ? pageTitle : 'FathMovie — Streaming Movie & Series' %>" />
+  <meta property="og:description" content="<%= typeof metaDescription !== 'undefined' ? metaDescription : 'Nonton streaming film dan series terlengkap sub Indo di FathMovie.' %>" />
+  <meta property="og:image" content="<%= currentOgImage %>" />
+  <meta property="og:image:secure_url" content="<%= currentOgImage %>" />
+  <meta property="og:image:alt" content="FathMovie — Platform Streaming Movie & Series" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="1200" />
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="<%= typeof pageTitle !== 'undefined' ? pageTitle : 'FathMovie' %>" />
+  <meta name="twitter:description" content="<%= typeof metaDescription !== 'undefined' ? metaDescription : 'Streaming film & series sub Indo' %>" />
+  <meta name="twitter:image" content="<%= currentOgImage %>" />
+
+  <!-- Favicon and App Icons -->
+  <link rel="icon" type="image/png" href="/FathMovie.png" />
+  <link rel="alternate icon" type="image/png" href="/FathMovie.png" />
+  <link rel="shortcut icon" href="/FathMovie.png" />
+  <link rel="apple-touch-icon" href="/FathMovie.png" />
+
+  <!-- FontAwesome & CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <!-- Top Instant Navigation Progress Bar -->
+  <div id="topProgressBar" class="top-progress-bar"></div>
+
+  <!-- Top Navbar -->
+  <% if (typeof hideNavbar === 'undefined' || !hideNavbar) { %>
+  <header class="navbar">
+    <div class="nav-left">
+      <a href="/" class="brand-logo" title="FathMovie Beranda">
+        <picture class="logo-picture">
+          <source srcset="/FathMovie.png" type="image/png">
+          <img src="/FathMovie.png" alt="FathMovie Logo" class="brand-logo-img glow-pulse" width="32" height="32" />
+        </picture>
+        <span>Movie<span class="logo-tag">Nas</span></span>
+      </a>
+
+      <ul class="nav-links" id="navLinks">
+        <li><a href="/" class="nav-link <%= typeof activeNav !== 'undefined' && activeNav === 'home' ? 'active' : '' %>"><i class="fa-solid fa-house"></i> Beranda</a></li>
+        <li><a href="/search/movie" class="nav-link <%= typeof activeNav !== 'undefined' && (activeNav === 'movies' || activeNav === 'movie') ? 'active' : '' %>"><i class="fa-solid fa-film"></i> Film</a></li>
+        <li><a href="/search/series" class="nav-link <%= typeof activeNav !== 'undefined' && activeNav === 'series' ? 'active' : '' %>"><i class="fa-solid fa-tv"></i> Series</a></li>
+        <li><a href="/search/drama" class="nav-link <%= typeof activeNav !== 'undefined' && activeNav === 'drama' ? 'active' : '' %>"><i class="fa-solid fa-clapperboard text-pink-400"></i> Drama Pendek</a></li>
+        <li><a href="/watchlist" class="nav-link <%= typeof activeNav !== 'undefined' && activeNav === 'watchlist' ? 'active' : '' %>"><i class="fa-solid fa-bookmark"></i> Watchlist</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-right">
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <form id="navSearchForm" onsubmit="event.preventDefault(); submitNavSearch();" style="display: flex; width: 100%;">
+          <input type="text" name="q" id="navSearchInput" placeholder="Cari film, series... [/]" value="<%= typeof query !== 'undefined' ? query : '' %>" autocomplete="off" />
+        </form>
+      </div>
+
+      <a href="/watchlist" class="watchlist-btn-badge" title="Daftar Tontonan">
+        <i class="fa-solid fa-bookmark"></i>
+        <span class="badge-count" style="display: none;">0</span>
+      </a>
+
+      <button class="menu-toggle" id="menuToggleBtn" aria-label="Toggle Menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+    </div>
+  </header>
+  <% } %>

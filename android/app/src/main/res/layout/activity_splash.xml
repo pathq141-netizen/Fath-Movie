@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <!-- Central Radial Lens Flare (Netflix Red) -->
+    <View
+        android:id="@+id/viewLensFlare"
+        android:layout_width="340dp"
+        android:layout_height="340dp"
+        android:layout_centerInParent="true"
+        android:alpha="0"
+        android:background="@drawable/bg_splash_flare" />
+
+    <!-- Center Laser Vertical Beam (Netflix Beam) -->
+    <View
+        android:id="@+id/viewCenterBeam"
+        android:layout_width="4dp"
+        android:layout_height="360dp"
+        android:layout_centerInParent="true"
+        android:alpha="0"
+        android:background="@drawable/bg_splash_beam" />
+
+    <!-- Logo Container -->
+    <FrameLayout
+        android:id="@+id/layoutSplashLogo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:alpha="0"
+        android:clipChildren="false">
+
+        <!-- FathMovie Wordmark -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="16dp">
+
+            <ImageView
+                android:id="@+id/ivSplashIcon"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="12dp"
+                android:contentDescription="FathMovie Logo"
+                android:src="@drawable/fathmovie" />
+
+            <TextView
+                android:id="@+id/tvSplashMovie"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-black"
+                android:shadowColor="#80000000"
+                android:shadowDx="0"
+                android:shadowDy="6"
+                android:shadowRadius="14"
+                android:text="Fath"
+                android:textColor="#FFFFFF"
+                android:textSize="44sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvSplashNas"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-black"
+                android:shadowColor="#E50914"
+                android:shadowDx="0"
+                android:shadowDy="0"
+                android:shadowRadius="28"
+                android:text="Movie"
+                android:textColor="#E50914"
+                android:textSize="44sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- Shimmer Light Sweep -->
+        <View
+            android:id="@+id/viewLogoShimmer"
+            android:layout_width="70dp"
+            android:layout_height="match_parent"
+            android:alpha="0"
+            android:background="@drawable/bg_splash_shimmer" />
+
+    </FrameLayout>
+
+    <!-- Cinematic Tagline -->
+    <TextView
+        android:id="@+id/tvSplashTagline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="54dp"
+        android:alpha="0"
+        android:letterSpacing="0.28"
+        android:text="STREAMING TANPA BATAS"
+        android:textColor="#94A3B8"
+        android:textSize="11sp"
+        android:textStyle="bold" />
+
+</RelativeLayout>

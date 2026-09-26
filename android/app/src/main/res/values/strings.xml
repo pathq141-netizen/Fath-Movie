@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">FathMovie</string>
+    <string name="search_hint">Cari film, serial TV, drama pendek...</string>
+    <string name="watch_now">Tonton Sekarang</string>
+    <string name="episodes">Daftar Episode</string>
+    <string name="synopsis">Sinopsis</string>
+    <string name="seasons">Musim</string>
+    <string name="quality">Kualitas Video</string>
+    <string name="retry">Coba Lagi</string>
+    <string name="loading">Memuat konten...</string>
+    <string name="error_loading">Gagal memuat data dari server.</string>
+</resources>

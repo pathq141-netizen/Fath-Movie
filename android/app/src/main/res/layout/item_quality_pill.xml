@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/layoutQualityPill"
+    android:layout_width="wrap_content"
+    android:layout_height="38dp"
+    android:layout_marginEnd="10dp"
+    android:background="@drawable/bg_pill_quality_inactive"
+    android:clickable="true"
+    android:focusable="true"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="12dp"
+    android:paddingEnd="14dp">
+
+    <ImageView
+        android:id="@+id/ivQualityPlayIcon"
+        android:layout_width="14dp"
+        android:layout_height="14dp"
+        android:layout_marginEnd="6dp"
+        android:src="@drawable/ic_play_circle"
+        app:tint="@color/text_white" />
+
+    <TextView
+        android:id="@+id/tvQualityRes"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="720p"
+        android:textColor="@color/text_white"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvQualitySize"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
+        android:text="206.4 MB"
+        android:textColor="@color/text_slate"
+        android:textSize="11sp" />
+
+</LinearLayout>

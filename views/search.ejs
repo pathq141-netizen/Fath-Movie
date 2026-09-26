@@ -1,0 +1,158 @@
+<%- include('partials/header', { 
+  pageTitle: query ? `Hasil Pencarian "${query}" — FathMovie` : 'Pencarian Film & Series — FathMovie',
+  metaDescription: query ? `Nonton film & series terkait "${query}" dengan subtitle Indonesia di FathMovie.` : 'Cari ribuan film & series sub Indo kualitas HD.',
+  activeNav: currentSlug === 'movie' ? 'movies' : (currentSlug === 'series' ? 'series' : (currentSlug === 'drama' ? 'drama' : 'search'))
+}) %>
+
+<!-- Search Main Container -->
+<main class="search-page-container">
+
+  <!-- Search Header & Input -->
+  <div class="search-header-bar">
+    <form onsubmit="event.preventDefault(); submitMainSearch();" class="search-input-large-wrap">
+      <i class="fa-solid fa-magnifying-glass search-icon-lg"></i>
+      <input
+        type="text"
+        id="mainSearchInput"
+        class="search-input-large"
+        placeholder="Ketik judul film atau serial (contoh: Avatar, Spider-Man, John Wick, Istri)..."
+        value="<%= typeof query !== 'undefined' ? query : '' %>"
+        autocomplete="off"
+        autofocus
+      />
+      <% if (query) { %>
+        <a href="/search/<%= currentSlug %>" class="search-clear-btn" style="display: flex; align-items: center; justify-content: center;" title="Hapus kata kunci">
+          <i class="fa-solid fa-xmark"></i>
+        </a>
+      <% } %>
+    </form>
+
+    <!-- Filter Pills -->
+    <div class="filter-pills">
+      <a href="/search/all<%= query ? '/' + encodeURIComponent(query) : '' %>" class="filter-pill <%= currentSlug === 'all' ? 'active' : '' %>">
+        Semua Kategori
+      </a>
+      <a href="/search/movie<%= query ? '/' + encodeURIComponent(query) : '' %>" class="filter-pill <%= currentSlug === 'movie' ? 'active' : '' %>">
+        <i class="fa-solid fa-film"></i> Film (Movie)
+      </a>
+      <a href="/search/series<%= query ? '/' + encodeURIComponent(query) : '' %>" class="filter-pill <%= currentSlug === 'series' ? 'active' : '' %>">
+        <i class="fa-solid fa-tv"></i> Serial TV (Series)
+      </a>
+      <a href="/search/drama<%= query ? '/' + encodeURIComponent(query) : '' %>" class="filter-pill <%= currentSlug === 'drama' ? 'active' : '' %>">
+        <i class="fa-solid fa-clapperboard text-pink-400"></i> Drama Pendek
+      </a>
+    </div>
+
+    <!-- Result Stat Text -->
+    <div class="text-sm text-slate-400 font-medium" id="searchStatText" style="min-height: 20px;">
+      <% if (query) { %>
+        <% if (results && results.length > 0) { %>
+          Menemukan <strong><%= results.length %></strong> hasil pencarian untuk "<strong><%= query %></strong>":
+        <% } else { %>
+          Tidak ada hasil ditemukan untuk "<strong><%= query %></strong>".
+        <% } %>
+      <% } else { %>
+        Menampilkan rekomendasi trending populer:
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Results Grid (Server-Side Rendered Real HTML with Client Dynamic Hydration) -->
+  <div class="responsive-grid" id="searchResultsContainer">
+    <% if (results && results.length > 0) { %>
+      <% results.forEach(function(item) { %>
+        <%- include('partials/card', { item: item }) %>
+      <% }); %>
+    <% } else if (query) { %>
+      <!-- Empty State -->
+      <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem;">
+        <div style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;">
+          <i class="fa-solid fa-film"></i>
+        </div>
+        <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Tidak Ada Hasil Ditemukan</h3>
+        <p style="font-size: 0.9rem; color: var(--text-secondary); max-width: 400px; margin: 0 auto;">
+          Coba periksa kembali ejaan judul film, gunakan kata kunci yang lebih ringkas, atau pilih kategori lain.
+        </p>
+      </div>
+    <% } %>
+  </div>
+
+</main>
+
+<script>
+  function submitMainSearch() {
+    const input = document.getElementById('mainSearchInput');
+    const q = (input ? input.value : '').trim();
+    const currentSlug = '<%= currentSlug %>';
+    if (q) {
+      window.location.href = `/search/${currentSlug}/${encodeURIComponent(q)}`;
+    } else {
+      window.location.href = `/search/${currentSlug}`;
+    }
+  }
+
+  // Frontend Pattern: Debounce Function for Live Search
+  function debounce(fn, delay) {
+    let timer = null;
+    return function(...args) {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn.apply(this, args), delay);
+    };
+  }
+
+  const searchInput = document.getElementById('mainSearchInput');
+  const resultsContainer = document.getElementById('searchResultsContainer');
+  const statText = document.getElementById('searchStatText');
+  const currentType = <%= currentType %>;
+  const currentSlug = '<%= currentSlug %>';
+
+  if (searchInput && resultsContainer) {
+    const performLiveSearch = debounce(async (q) => {
+      const trimmed = q.trim();
+      if (!trimmed) {
+        history.replaceState(null, '', `/search/${currentSlug}`);
+        window.location.href = `/search/${currentSlug}`;
+        return;
+      }
+      
+      statText.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-red-500"></i> Sedang mencari film...';
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}&type=${currentType}`);
+        const data = await res.json();
+        const items = data.data || [];
+
+        // Update URL state to /search/:type/:query
+        history.replaceState(null, '', `/search/${currentSlug}/${encodeURIComponent(trimmed)}`);
+
+        if (items.length > 0) {
+          statText.innerHTML = `Menemukan <strong>${items.length}</strong> hasil pencarian untuk "<strong>${trimmed}</strong>":`;
+          resultsContainer.innerHTML = items.map(item => StreamBoxApp.createPosterCard(item)).join('');
+          if (typeof window.syncAllWatchlistButtons === 'function') {
+            window.syncAllWatchlistButtons();
+          }
+        } else {
+          statText.innerHTML = `Tidak ada hasil ditemukan untuk "<strong>${trimmed}</strong>".`;
+          resultsContainer.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem;">
+              <div style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;">
+                <i class="fa-solid fa-film"></i>
+              </div>
+              <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Tidak Ada Hasil Ditemukan</h3>
+              <p style="font-size: 0.9rem; color: var(--text-secondary); max-width: 400px; margin: 0 auto;">
+                Coba periksa kembali ejaan judul film, gunakan kata kunci yang lebih ringkas, atau pilih kategori lain.
+              </p>
+            </div>
+          `;
+        }
+      } catch (err) {
+        statText.textContent = 'Gagal memuat hasil pencarian.';
+      }
+    }, 450);
+
+    searchInput.addEventListener('input', (e) => {
+      performLiveSearch(e.target.value);
+    });
+  }
+</script>
+
+<%- include('partials/footer') %>

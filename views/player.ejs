@@ -1,0 +1,476 @@
+<%
+  const subType = Number(stream.subjectType || (detail && detail.subjectType)) || (stream.isMovie ? 1 : 2);
+  const isShortDrama = subType === 7 || stream.typeLabel === 'Short Drama' || (detail && detail.typeLabel === 'Short Drama');
+  const isSeries = !stream.isMovie || isShortDrama || subType === 2;
+  const bestStream = stream.streams.find(s => s.resolution === 720) || stream.streams.find(s => s.resolution === 1080) || stream.streams[0];
+  const idSub = (stream.subtitles || []).find(s => s.languageCode.toLowerCase() === 'id' || s.languageName.toLowerCase().includes('indonesia'));
+  const pageTitle = isSeries 
+    ? `Nonton ${stream.title} ${isShortDrama ? `Ep ${stream.episode}` : `S${stream.season} E${stream.episode}`} — FathMovie` 
+    : `Nonton ${stream.title} Sub Indo — FathMovie`;
+
+  let nextEp = null;
+  let prevEp = null;
+  let episodes = [1];
+  if (isSeries && detail && detail.resource && detail.resource.seasons) {
+    const curSeasonObj = detail.resource.seasons.find(s => s.seasonNumber === stream.season) || detail.resource.seasons[0];
+    episodes = curSeasonObj ? (curSeasonObj.allEpisodes || [1]) : [1];
+    const curIdx = episodes.indexOf(stream.episode);
+    prevEp = curIdx > 0 ? episodes[curIdx - 1] : null;
+    nextEp = curIdx < episodes.length - 1 ? episodes[curIdx + 1] : null;
+  }
+%>
+<%- include('partials/header', { 
+  pageTitle: pageTitle,
+  metaDescription: `Nonton streaming ${stream.title} kualitas ${bestStream ? bestStream.quality : 'HD'} subtitle Indonesia di FathMovie.`,
+  activeNav: '',
+  hideNavbar: true
+}) %>
+
+<!-- Player Page Container -->
+<main class="player-page-container <%= isShortDrama ? 'is-shortdrama' : '' %>">
+
+  <!-- Top Navigation Bar -->
+  <div class="player-top-bar">
+    <a href="/detail/<%= encodeURIComponent(stream.detailPath) %>" class="player-back-btn">
+      <i class="fa-solid fa-arrow-left"></i>
+      <span class="back-text">Kembali</span>
+    </a>
+
+    <div class="player-title-info">
+      <h1 class="player-main-title"><%= stream.title %></h1>
+      <p class="player-sub-title">
+        <%= isShortDrama ? `Drama Pendek • Episode ${stream.episode}` : (isSeries ? `Season ${stream.season} • Episode ${stream.episode}` : 'Film Layar Lebar') %>
+      </p>
+    </div>
+
+    <div>
+      <button class="btn btn-secondary player-watchlist-btn"
+        data-path="<%= stream.detailPath %>"
+        data-title="<%= stream.title %>"
+        data-cover="<%= detail ? detail.coverUrl : '' %>"
+        data-type="<%= isShortDrama ? 'Short Drama' : (isSeries ? 'Series' : 'Movie') %>"
+        data-rating="<%= detail ? detail.imdbRating : '8.0' %>"
+        data-year="<%= detail ? detail.year : '2024' %>"
+        onclick="toggleWatchlistFromButton(this)">
+        <i class="fa-solid fa-bookmark"></i> <span class="btn-text">Watchlist</span>
+      </button>
+    </div>
+  </div>
+
+  <% if (isShortDrama) { %>
+    <!-- SHORT DRAMA PORTRAIT LAYOUT (9:16 Vertical Video Screen) -->
+    <div class="shortdrama-player-layout">
+      <!-- Left Column: Portrait Video Player + Quick Nav + Quality -->
+      <div class="shortdrama-player-col">
+        <div class="native-player-container portrait-player">
+          <% if (!bestStream) { %>
+            <div class="player-empty-state">
+              <div class="player-empty-icon">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <h3 class="player-empty-title">
+                Episode <%= stream.episode %> Belum Tersedia
+              </h3>
+              <p class="player-empty-desc">
+                Sumber streaming video untuk episode ini saat ini belum dirilis atau belum tersedia dari server provider. Silakan pilih episode berikutnya di bawah.
+              </p>
+              <% if (nextEp) { %>
+                <a href="/play/<%= encodeURIComponent(stream.detailPath) %>/<%= nextEp %>/<%= stream.season %>" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.75rem 1.5rem;">
+                  <span>Tonton Episode <%= nextEp %></span>
+                  <i class="fa-solid fa-arrow-right"></i>
+                </a>
+              <% } %>
+            </div>
+          <% } else { %>
+            <video
+              id="mainVideo"
+              class="native-video"
+              controls
+              playsinline
+              crossOrigin="anonymous"
+              preload="metadata"
+              src="<%= bestStream ? (bestStream.proxyUrl || bestStream.url) : '' %>"
+            >
+              <% 
+                const idSub = (stream.subtitles || []).find(s => s.languageCode.toLowerCase() === 'id' || s.languageName.toLowerCase().includes('indonesia'));
+                if (idSub) { 
+              %>
+                <track kind="subtitles" label="<%= idSub.languageName %>" srclang="<%= idSub.languageCode %>" src="<%= idSub.vttUrl %>" default>
+              <% } %>
+              <% (stream.subtitles || []).forEach(function(sub) { 
+                if (!idSub || sub.id !== idSub.id) {
+              %>
+                <track kind="subtitles" label="<%= sub.languageName %>" srclang="<%= sub.languageCode %>" src="<%= sub.vttUrl %>">
+              <% 
+                }
+              }); %>
+            </video>
+          <% } %>
+        </div>
+
+        <!-- Quick Next/Prev for Short Drama right under portrait screen -->
+        <div class="portrait-quick-nav">
+          <% if (prevEp) { %>
+            <a href="/play/<%= encodeURIComponent(stream.detailPath) %>/<%= prevEp %>/<%= stream.season %>" class="btn btn-secondary ep-nav-btn">
+              <i class="fa-solid fa-chevron-left"></i> Ep <%= prevEp %>
+            </a>
+          <% } %>
+          <span class="portrait-ep-indicator">Episode <%= stream.episode %> / <%= episodes.length %></span>
+          <% if (nextEp) { %>
+            <a href="/play/<%= encodeURIComponent(stream.detailPath) %>/<%= nextEp %>/<%= stream.season %>" class="btn btn-primary ep-nav-btn">
+              Ep <%= nextEp %> <i class="fa-solid fa-chevron-right"></i>
+            </a>
+          <% } %>
+        </div>
+
+        <!-- Quality Pills for Short Drama -->
+        <% if (bestStream && stream.streams && stream.streams.length > 0) { %>
+          <div class="stream-toolbar-card portrait-toolbar">
+            <div class="stream-toolbar-section">
+              <div class="toolbar-label">
+                <i class="fa-solid fa-sliders text-pink-500"></i>
+                <span>Pilihan Kualitas:</span>
+              </div>
+              <div class="quality-pills-wrap" id="qualityPillsWrap">
+                <% stream.streams.forEach(function(s) { 
+                  const isCurrent = bestStream && bestStream.quality === s.quality;
+                  const streamUrl = s.proxyUrl || s.url;
+                %>
+                  <button
+                    class="quality-pill <%= isCurrent ? 'active' : '' %>"
+                    data-quality="<%= s.quality %>"
+                    data-url="<%= streamUrl %>"
+                    onclick="switchResolution('<%= s.quality %>', '<%= streamUrl %>')"
+                  >
+                    <i class="fa-solid fa-circle-play"></i>
+                    <span><%= s.quality %></span>
+                    <% if (s.sizeFormatted) { %>
+                      <small class="pill-size"><%= s.sizeFormatted %></small>
+                    <% } %>
+                  </button>
+                <% }); %>
+              </div>
+            </div>
+
+            <% if (stream.subtitles && stream.subtitles.length > 0) { %>
+              <div class="stream-toolbar-section">
+                <div class="toolbar-label">
+                  <i class="fa-solid fa-closed-captioning text-amber-400"></i>
+                  <span>Subtitle:</span>
+                </div>
+                <div class="sub-pills-wrap">
+                  <button class="sub-pill <%= !idSub ? 'active' : '' %>" id="subOffBtn" onclick="setSubtitle('off')">
+                    Mati
+                  </button>
+                  <% stream.subtitles.forEach(function(sub) { 
+                    const isDefault = idSub && idSub.id === sub.id;
+                  %>
+                    <button
+                      class="sub-pill <%= isDefault ? 'active' : '' %>"
+                      data-subid="<%= sub.id %>"
+                      data-vtt="<%= sub.vttUrl %>"
+                      data-name="<%= sub.languageName %>"
+                      data-lang="<%= sub.languageCode %>"
+                      onclick="setSubtitle('<%= sub.id %>', '<%= sub.vttUrl %>', '<%= sub.languageName %>', '<%= sub.languageCode %>')"
+                    >
+                      <%= sub.languageName %>
+                    </button>
+                  <% }); %>
+                </div>
+              </div>
+            <% } %>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Right Column: Episodes Grid for Short Drama -->
+      <div class="shortdrama-sidebar-col">
+        <div class="series-nav-panel">
+          <div class="series-nav-header">
+            <div>
+              <h3 class="series-nav-title">Daftar Episode Drama Pendek</h3>
+              <p class="series-nav-sub">Total <%= episodes.length %> Episode • Format Layar Vertikal</p>
+            </div>
+          </div>
+
+          <div class="series-ep-grid shortdrama-ep-grid">
+            <% episodes.forEach(function(ep) { 
+              const isCurrent = ep === stream.episode;
+              const epUrl = `/play/${encodeURIComponent(stream.detailPath)}/${ep}/${stream.season}`;
+            %>
+              <a href="<%= epUrl %>" class="ep-badge-btn <%= isCurrent ? 'current' : '' %>">
+                <span class="ep-badge-num"><%= ep %></span>
+                <span class="ep-badge-lbl">EP</span>
+              </a>
+            <% }); %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% } else { %>
+    <!-- STANDARD WIDESCREEN 16:9 PLAYER (Movies & Regular TV Series) -->
+    <div class="native-player-container">
+      <% if (!bestStream) { %>
+        <div class="player-empty-state">
+          <div class="player-empty-icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <h3 class="player-empty-title">
+            <%= isSeries ? `Episode ${stream.episode} Belum Tersedia` : 'Video Belum Tersedia' %>
+          </h3>
+          <p class="player-empty-desc">
+            Sumber streaming video untuk episode ini saat ini belum dirilis atau belum tersedia dari server provider. Silakan pilih episode berikutnya di bawah.
+          </p>
+          <% if (nextEp) { %>
+            <a href="/play/<%= encodeURIComponent(stream.detailPath) %>/<%= nextEp %>/<%= stream.season %>" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.75rem 1.5rem;">
+              <span>Tonton Episode <%= nextEp %></span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </a>
+          <% } %>
+        </div>
+      <% } else { %>
+        <video
+          id="mainVideo"
+          class="native-video"
+          controls
+          playsinline
+          crossOrigin="anonymous"
+          preload="metadata"
+          src="<%= bestStream ? (bestStream.proxyUrl || bestStream.url) : '' %>"
+        >
+          <% 
+            const idSub = (stream.subtitles || []).find(s => s.languageCode.toLowerCase() === 'id' || s.languageName.toLowerCase().includes('indonesia'));
+            if (idSub) { 
+          %>
+            <track kind="subtitles" label="<%= idSub.languageName %>" srclang="<%= idSub.languageCode %>" src="<%= idSub.vttUrl %>" default>
+          <% } %>
+          <% (stream.subtitles || []).forEach(function(sub) { 
+            if (!idSub || sub.id !== idSub.id) {
+          %>
+            <track kind="subtitles" label="<%= sub.languageName %>" srclang="<%= sub.languageCode %>" src="<%= sub.vttUrl %>">
+          <% 
+            }
+          }); %>
+        </video>
+      <% } %>
+    </div>
+
+    <!-- STREAM SETTINGS BAR (Quality 360p-1080p & Subtitles) -->
+    <% if (bestStream && stream.streams && stream.streams.length > 0) { %>
+    <div class="stream-toolbar-card">
+      <div class="stream-toolbar-section">
+        <div class="toolbar-label">
+          <i class="fa-solid fa-sliders text-red-500"></i>
+          <span>Pilihan Kualitas:</span>
+        </div>
+        <div class="quality-pills-wrap" id="qualityPillsWrap">
+          <% stream.streams.forEach(function(s) { 
+            const isCurrent = bestStream && bestStream.quality === s.quality;
+            const streamUrl = s.proxyUrl || s.url;
+          %>
+            <button
+              class="quality-pill <%= isCurrent ? 'active' : '' %>"
+              data-quality="<%= s.quality %>"
+              data-url="<%= streamUrl %>"
+              onclick="switchResolution('<%= s.quality %>', '<%= streamUrl %>')"
+            >
+              <i class="fa-solid fa-circle-play"></i>
+              <span><%= s.quality %></span>
+              <% if (s.sizeFormatted) { %>
+                <small class="pill-size"><%= s.sizeFormatted %></small>
+              <% } %>
+            </button>
+          <% }); %>
+        </div>
+      </div>
+
+      <% if (stream.subtitles && stream.subtitles.length > 0) { %>
+        <div class="stream-toolbar-section">
+          <div class="toolbar-label">
+            <i class="fa-solid fa-closed-captioning text-amber-400"></i>
+            <span>Subtitle:</span>
+          </div>
+          <div class="sub-pills-wrap">
+            <button class="sub-pill <%= !idSub ? 'active' : '' %>" id="subOffBtn" onclick="setSubtitle('off')">
+              Mati
+            </button>
+            <% stream.subtitles.forEach(function(sub) { 
+              const isDefault = idSub && idSub.id === sub.id;
+            %>
+              <button
+                class="sub-pill <%= isDefault ? 'active' : '' %>"
+                data-subid="<%= sub.id %>"
+                data-vtt="<%= sub.vttUrl %>"
+                data-name="<%= sub.languageName %>"
+                data-lang="<%= sub.languageCode %>"
+                onclick="setSubtitle('<%= sub.id %>', '<%= sub.vttUrl %>', '<%= sub.languageName %>', '<%= sub.languageCode %>')"
+              >
+                <%= sub.languageName %>
+              </button>
+            <% }); %>
+          </div>
+        </div>
+      <% } %>
+    </div>
+    <% } %>
+
+    <!-- Series Episodes Navigation (If Series) -->
+    <% if (isSeries && episodes && episodes.length > 0) { %>
+      <div class="series-nav-panel">
+        <div class="series-nav-header">
+          <div>
+            <h3 class="series-nav-title">Episode Season <%= stream.season %></h3>
+            <p class="series-nav-sub">Klik episode untuk langsung memutar kelanjutan serial</p>
+          </div>
+
+          <div class="player-ep-nav-controls">
+            <% if (prevEp) { %>
+              <a href="/play/<%= encodeURIComponent(stream.detailPath) %>/<%= prevEp %>/<%= stream.season %>" class="btn btn-secondary ep-nav-btn">
+                <i class="fa-solid fa-chevron-left"></i> Ep <%= prevEp %>
+              </a>
+            <% } %>
+            <% if (nextEp) { %>
+              <a href="/play/<%= encodeURIComponent(stream.detailPath) %>/<%= nextEp %>/<%= stream.season %>" class="btn btn-primary ep-nav-btn">
+                Ep <%= nextEp %> <i class="fa-solid fa-chevron-right"></i>
+              </a>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Episode Grid Buttons -->
+        <div class="series-ep-grid">
+          <% episodes.forEach(function(ep) { 
+            const isCurrent = ep === stream.episode;
+            const epUrl = `/play/${encodeURIComponent(stream.detailPath)}/${ep}/${stream.season}`;
+          %>
+            <a href="<%= epUrl %>" class="ep-badge-btn <%= isCurrent ? 'current' : '' %>">
+              <span class="ep-badge-num"><%= ep %></span>
+              <span class="ep-badge-lbl">EP</span>
+            </a>
+          <% }); %>
+        </div>
+      </div>
+    <% } %>
+  <% } %>
+
+</main>
+
+<script>
+  const video = document.getElementById('mainVideo');
+  const detailPath = '<%= stream.detailPath %>';
+  const subjectId = '<%= stream.subjectId %>';
+  const isMovie = <%= stream.isMovie %>;
+  const currentSeason = <%= stream.season %>;
+  const currentEpisode = <%= stream.episode %>;
+  const coverUrl = '<%= detail ? detail.coverUrl : '' %>';
+
+  // Quality Switching: Seamlessly changes stream resolution and restores currentTime
+  window.switchResolution = function(quality, streamUrl) {
+    if (!video) return;
+    const prevTime = video.currentTime;
+    const wasPlaying = !video.paused;
+
+    // Update active button state
+    document.querySelectorAll('.quality-pill').forEach(p => {
+      p.classList.toggle('active', p.getAttribute('data-quality') === quality);
+    });
+
+    video.src = streamUrl;
+    video.currentTime = prevTime;
+
+    if (wasPlaying) {
+      video.play().catch(() => {});
+    }
+
+    StreamBoxApp.showToast(`Kualitas: ${quality}`);
+  };
+
+  // Subtitle Switching
+  window.setSubtitle = function(subId, vttUrl, langName, langCode) {
+    if (!video) return;
+    document.querySelectorAll('.sub-pill').forEach(p => {
+      p.classList.toggle('active', p.getAttribute('data-subid') === subId);
+    });
+
+    if (subId === 'off') {
+      document.getElementById('subOffBtn').classList.add('active');
+      for (let i = 0; i < video.textTracks.length; i++) {
+        video.textTracks[i].mode = 'disabled';
+      }
+      StreamBoxApp.showToast('Subtitle dinonaktifkan');
+      return;
+    }
+
+    document.getElementById('subOffBtn').classList.remove('active');
+
+    // Match or create track
+    let found = false;
+    for (let i = 0; i < video.textTracks.length; i++) {
+      if (video.textTracks[i].label === langName) {
+        video.textTracks[i].mode = 'showing';
+        found = true;
+      } else {
+        video.textTracks[i].mode = 'disabled';
+      }
+    }
+
+    if (!found) {
+      const track = document.createElement('track');
+      track.kind = 'subtitles';
+      track.label = langName;
+      track.srclang = langCode;
+      track.src = vttUrl;
+      track.default = true;
+      video.appendChild(track);
+      if (video.textTracks.length > 0) {
+        video.textTracks[video.textTracks.length - 1].mode = 'showing';
+      }
+    }
+
+    StreamBoxApp.showToast(`Subtitle: ${langName}`);
+  };
+
+  // Resume Playback from localStorage
+  if (video) {
+    video.addEventListener('loadedmetadata', () => {
+      const history = StreamBoxApp.getHistoryItem(detailPath);
+      if (history && history.currentTime > 15) {
+        if (isMovie || (history.season === currentSeason && history.episode === currentEpisode)) {
+          video.currentTime = history.currentTime;
+          StreamBoxApp.showToast(`Melanjutkan dari menit ${StreamBoxApp.formatTime(history.currentTime)}`);
+        }
+      }
+    });
+
+    // Auto-Save progress every 5 seconds
+    setInterval(() => {
+      if (video && !video.paused && video.currentTime > 5) {
+        StreamBoxApp.saveHistory({
+          detailPath,
+          subjectId,
+          title: '<%= stream.title.replace(/\'/g, "") %>',
+          coverUrl,
+          isMovie,
+          season: currentSeason,
+          episode: currentEpisode,
+          currentTime: video.currentTime,
+          duration: video.duration || 0,
+        });
+      }
+    }, 5000);
+
+    // Auto-play next episode when video ends
+    video.addEventListener('ended', () => {
+      <% if (isSeries && nextEp) { %>
+        StreamBoxApp.showToast('Episode selesai. Memutar Episode <%= nextEp %>...');
+        setTimeout(() => {
+          window.location.href = '/play/<%= encodeURIComponent(stream.detailPath) %>/<%= nextEp %>/<%= stream.season %>';
+        }, 3500);
+      <% } %>
+    });
+  }
+</script>
+
+<%- include('partials/footer', {
+  hideNavbar: true
+}) %>

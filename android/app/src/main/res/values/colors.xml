@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Background & Surfaces matching MovieNas CSS -->
+    <color name="background_dark">#060609</color>
+    <color name="surface_dark">#0E0E15</color>
+    <color name="card_dark">#14141F</color>
+    <color name="bg_main">#060609</color>
+    <color name="bg_surface">#0E0E15</color>
+    <color name="bg_card">#14141F</color>
+    <color name="bg_card_hover">#1B1B2A</color>
+    <color name="bg_glass">#D00E0E15</color>
+    <color name="bg_glass_chip">#25FFFFFF</color>
+    <color name="border_card">#1AFFFFFF</color>
+    <color name="border_subtle">#1F2430</color>
+
+    <!-- Brand Colors -->
+    <color name="brand_red">#E50914</color>
+    <color name="brand_red_bright">#FF1E27</color>
+    <color name="brand_red_dark">#B8000B</color>
+    <color name="brand_red_glow">#55E50914</color>
+
+    <!-- Accents -->
+    <color name="accent_gold">#FBBF24</color>
+    <color name="accent_gold_dark">#D97706</color>
+    <color name="accent_blue">#38BDF8</color>
+    <color name="accent_purple">#A855F7</color>
+    <color name="accent_pink">#EC4899</color>
+    <color name="accent_green">#22C55E</color>
+
+    <!-- Badges -->
+    <color name="badge_movie_bg">#1E3A8A</color>
+    <color name="badge_series_bg">#581C87</color>
+    <color name="badge_drama_bg">#831843</color>
+
+    <!-- Typography -->
+    <color name="text_white">#F8FAFC</color>
+    <color name="text_slate">#94A3B8</color>
+    <color name="text_dark_slate">#64748B</color>
+    <color name="divider_color">#1F2430</color>
+    <color name="black">#000000</color>
+    <color name="transparent">#00000000</color>
+</resources>

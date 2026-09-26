@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Izin Akses Jaringan untuk Streaming Video dan Mengambil API -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- Izin Akses Penyimpanan untuk Download Video Offline -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:supportsRtl="true"
+        android:usesCleartextTraffic="true"
+        android:requestLegacyExternalStorage="true"
+        android:theme="@style/Theme.FathMovie">
+
+        <!-- 0. Splash Screen (Netflix-Style Cinematic Intro) -->
+        <activity
+            android:name=".ui.SplashActivity"
+            android:exported="true"
+            android:theme="@style/Theme.FathMovie.Splash"
+            android:configChanges="orientation|screenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 1. Halaman Utama (Home & Feed & Offline Tab) -->
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize" />
+
+        <!-- 2. Halaman Detail (Sinopsis, Musim, & Episode) -->
+        <activity
+            android:name=".ui.DetailActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize" />
+
+        <!-- 3. Halaman Pencarian -->
+        <activity
+            android:name=".ui.SearchActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize" />
+
+        <!-- 4. Halaman Pemutar Video Native (Media3 / ExoPlayer Fullscreen) -->
+        <activity
+            android:name=".ui.PlayerActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:supportsPictureInPicture="true"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden"
+            android:theme="@style/Theme.FathMovie.Player" />
+
+    </application>
+
+</manifest>

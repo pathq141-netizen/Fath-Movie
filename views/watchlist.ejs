@@ -1,0 +1,131 @@
+<%- include('partials/header', { 
+  pageTitle: 'Watchlist Saya — FathMovie',
+  metaDescription: 'Daftar tontonan tersimpan favorit Anda di FathMovie. Nonton film & series sub Indo.',
+  activeNav: 'watchlist'
+}) %>
+
+<!-- Watchlist Page Container -->
+<main class="main-container" style="margin-top: 5rem; min-height: 65vh;">
+  
+  <div class="section-header" style="margin-bottom: 2rem;">
+    <div class="section-title-wrap">
+      <div class="section-title-bar"></div>
+      <div>
+        <h1 class="section-title" style="font-size: 1.8rem;">
+          <i class="fa-solid fa-bookmark text-red-500" style="margin-right: 0.5rem;"></i> Watchlist Saya
+        </h1>
+        <p class="section-subtitle">Daftar tontonan film, serial TV, dan drama pendek yang Anda simpan.</p>
+      </div>
+    </div>
+
+    <div id="watchlistHeaderActions" style="display: none;">
+      <button class="btn btn-secondary" onclick="clearAllWatchlist()" style="font-size: 0.82rem; padding: 0.5rem 1rem;">
+        <i class="fa-solid fa-trash-can"></i> Hapus Semua
+      </button>
+    </div>
+  </div>
+
+  <!-- Empty State (Shown when no items) -->
+  <div class="player-empty-state" id="watchlistEmptyState" style="display: none; padding: 4rem 1.5rem; max-width: 600px; margin: 2rem auto;">
+    <div class="player-empty-icon" style="background: rgba(229, 9, 20, 0.15); color: var(--brand);">
+      <i class="fa-solid fa-bookmark"></i>
+    </div>
+    <h3 class="player-empty-title">Watchlist Anda Masih Kosong</h3>
+    <p class="player-empty-desc">
+      Anda belum menambahkan tontonan apapun. Jelajahi ribuan film, serial, dan drama pendek lalu klik tombol <strong>Watchlist</strong> untuk menyimpannya di sini.
+    </p>
+    <a href="/" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.75rem 1.8rem; border-radius: 9999px;">
+      <i class="fa-solid fa-compass"></i> Jelajahi Konten
+    </a>
+  </div>
+
+  <!-- Grid of Watchlist Items -->
+  <div class="responsive-grid" id="watchlistGrid" style="display: none;"></div>
+
+</main>
+
+<script>
+  function renderWatchlistPage() {
+    const list = StreamBoxApp.getWatchlist();
+    const emptyState = document.getElementById('watchlistEmptyState');
+    const grid = document.getElementById('watchlistGrid');
+    const actions = document.getElementById('watchlistHeaderActions');
+
+    if (!list || list.length === 0) {
+      if (emptyState) emptyState.style.display = 'flex';
+      if (grid) { grid.style.display = 'none'; grid.innerHTML = ''; }
+      if (actions) actions.style.display = 'none';
+      return;
+    }
+
+    if (emptyState) emptyState.style.display = 'none';
+    if (actions) actions.style.display = 'block';
+    if (grid) {
+      grid.style.display = 'grid';
+      grid.innerHTML = list.map(item => {
+        const isMovie = item.type === 'Movie' || item.isMovie === true;
+        const isShortDrama = item.type === 'Short Drama';
+        const typeBadge = isShortDrama
+          ? '<span class="badge" style="background: rgba(236,72,153,0.9); color: #fff;">Short Drama</span>'
+          : (isMovie 
+              ? '<span class="badge badge-type-movie">Movie</span>' 
+              : '<span class="badge badge-type-series">Series</span>');
+
+        const playUrl = isMovie 
+          ? `/play/${encodeURIComponent(item.detailPath)}`
+          : `/play/${encodeURIComponent(item.detailPath)}/1/1`;
+
+        const detailUrl = `/detail/${encodeURIComponent(item.detailPath)}`;
+
+        return `
+          <div class="card-poster" id="card-${item.detailPath}">
+            <div class="card-image-wrap">
+              <img src="${item.coverUrl || '/placeholder.jpg'}" alt="${item.title}" loading="lazy" decoding="async" />
+              <div class="card-badge-top">
+                ${typeBadge}
+                ${item.rating ? `<span class="card-rating-badge"><i class="fa-solid fa-star"></i> ${item.rating}</span>` : ''}
+              </div>
+              <a href="${detailUrl}" class="card-overlay-hover" aria-label="Lihat detail ${item.title}">
+                <div class="card-hover-play">
+                  <i class="fa-solid fa-play"></i>
+                </div>
+              </a>
+            </div>
+            <div class="card-info" style="position: relative;">
+              <a href="${detailUrl}" class="card-title" title="${item.title}">${item.title}</a>
+              <div class="card-meta">
+                <span>${item.year || (isShortDrama ? 'Drama Pendek' : (isMovie ? 'Film' : 'Serial'))}</span>
+                <button onclick="removeItemFromWatchlist('${item.detailPath}')" title="Hapus dari Watchlist" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.85rem; padding: 0.2rem 0.4rem; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  function removeItemFromWatchlist(detailPath) {
+    let list = StreamBoxApp.getWatchlist();
+    list = list.filter(i => i.detailPath !== detailPath);
+    localStorage.setItem('movienas_watchlist', JSON.stringify(list));
+    StreamBoxApp.updateWatchlistBadge();
+    StreamBoxApp.showToast('Dihapus dari Watchlist');
+    renderWatchlistPage();
+  }
+
+  function clearAllWatchlist() {
+    if (confirm('Yakin ingin menghapus semua daftar tontonan di Watchlist?')) {
+      localStorage.removeItem('movienas_watchlist');
+      StreamBoxApp.updateWatchlistBadge();
+      StreamBoxApp.showToast('Semua tontonan telah dihapus');
+      renderWatchlistPage();
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', renderWatchlistPage);
+  window.addEventListener('watchlist-updated', renderWatchlistPage);
+</script>
+
+<%- include('partials/footer') %>

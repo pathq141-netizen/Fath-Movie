@@ -1,0 +1,237 @@
+<%
+  const subType = Number(detail.subjectType) || 1;
+  const isShortDrama = subType === 7 || detail.typeLabel === 'Short Drama';
+  const isSeries = subType === 2 || detail.typeLabel === 'Series';
+  const isEpisodic = isSeries || isShortDrama;
+  const bgImg = detail.coverUrl || '';
+  const metaDesc = detail.description ? detail.description.slice(0, 160) + '...' : `Nonton ${detail.title} subtitle Indonesia gratis di FathMovie.`;
+%>
+<%- include('partials/header', { 
+  pageTitle: `${detail.title} — Streaming FathMovie`,
+  metaDescription: metaDesc,
+  ogImage: detail.coverUrl,
+  ogType: isEpisodic ? 'video.tv_show' : 'video.movie',
+  activeNav: isSeries ? 'series' : (isShortDrama ? 'series' : 'movies')
+}) %>
+
+<!-- Detail Backdrop Header (Server-Side Rendered!) -->
+<section class="detail-header-backdrop" style="background-image: url('<%= bgImg %>');">
+  <div class="detail-backdrop-overlay"></div>
+  
+  <div class="detail-content-wrap">
+    <!-- Left: Poster Card & CTA -->
+    <div class="detail-poster-col">
+      <div class="detail-poster-card">
+        <img id="detailPosterImg" src="<%= detail.coverUrl %>" alt="<%= detail.title %>" />
+        <div class="detail-poster-actions">
+          <% 
+            let directPlayUrl = `/play/${encodeURIComponent(detail.detailPath)}`;
+            if (isEpisodic && detail.resource && detail.resource.seasons && detail.resource.seasons.length > 0) {
+              const s1 = detail.resource.seasons[0];
+              const ep1 = s1.allEpisodes?.[0] || 1;
+              directPlayUrl = `/play/${encodeURIComponent(detail.detailPath)}/${ep1}/${s1.seasonNumber || 1}`;
+            }
+          %>
+          <a href="<%= directPlayUrl %>" class="btn btn-primary" style="width: 100%;">
+            <i class="fa-solid fa-play"></i> Putar Sekarang
+          </a>
+          <button class="btn btn-secondary" id="detailWatchlistBtn" style="width: 100%;"
+            data-path="<%= detail.detailPath %>"
+            data-title="<%= detail.title %>"
+            data-cover="<%= detail.coverUrl %>"
+            data-type="<%= detail.typeLabel %>"
+            data-rating="<%= detail.imdbRating %>"
+            data-year="<%= detail.year %>"
+            onclick="toggleWatchlistFromButton(this)">
+            <i class="fa-solid fa-plus"></i> Watchlist
+          </button>
+          <% if (detail.trailer && (detail.trailer.proxyUrl || detail.trailer.url)) { %>
+            <button class="btn btn-secondary" style="width: 100%;"
+              data-trailer="<%= detail.trailer.proxyUrl || detail.trailer.url %>"
+              data-title="<%= detail.title %>"
+              onclick="openTrailerModal(this.dataset.trailer, this.dataset.title)">
+              <i class="fa-solid fa-film"></i> Tonton Trailer
+            </button>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Metadata & Synopsis -->
+    <div class="detail-info-col">
+      <div class="hero-badge-row">
+        <span class="badge <%= isShortDrama ? 'badge-type-shortdrama' : (isSeries ? 'badge-type-series' : 'badge-type-movie') %>">
+          <%= isShortDrama ? 'Short Drama' : (isSeries ? 'Series' : 'Movie') %>
+        </span>
+        <span class="badge badge-rating">
+          <i class="fa-solid fa-star"></i>
+          <span><%= detail.imdbRating || '8.0' %></span>
+          <% if (detail.imdbRatingCount) { %>
+            <span style="font-weight: normal; opacity: 0.8; font-size: 0.65rem;">(<%= Number(detail.imdbRatingCount).toLocaleString() %> votes)</span>
+          <% } %>
+        </span>
+        <span class="badge badge-quality">Full HD 1080p</span>
+        <span class="badge badge-meta"><%= detail.year || (detail.releaseDate ? detail.releaseDate.split('-')[0] : '2024') %></span>
+        <span class="badge badge-meta">
+          <% if (isEpisodic) { %>
+            <i class="fa-solid fa-list-ol"></i> <%= detail.totalEpisodes ? `${detail.totalEpisodes} Episode` : (isShortDrama ? 'Drama Pendek' : 'Series') %>
+          <% } else { %>
+            <i class="fa-solid fa-clock"></i> <%= detail.durationFormatted || 'Film' %>
+          <% } %>
+        </span>
+        <% if (detail.countryName) { %>
+          <span class="badge badge-meta"><%= detail.countryName %></span>
+        <% } %>
+      </div>
+
+      <h1 class="detail-title"><%= detail.title %></h1>
+
+      <% if (detail.genre && detail.genre.length > 0) { %>
+        <div class="hero-genres">
+          <% detail.genre.forEach(function(g) { %>
+            <span class="genre-chip"><%= g %></span>
+          <% }); %>
+        </div>
+      <% } %>
+
+      <div>
+        <h3 class="detail-synopsis-title">Sinopsis</h3>
+        <p class="detail-synopsis-text">
+          <%= detail.description || 'Sinopsis belum tersedia.' %>
+        </p>
+      </div>
+
+      <!-- Dubbing Options (if available) -->
+      <% if (detail.dubs && detail.dubs.length > 0) { %>
+        <div class="detail-dubs-box">
+          <div class="dubs-title"><i class="fa-solid fa-language"></i> Audio / Dubbing Tersedia:</div>
+          <div class="dubs-list">
+            <% detail.dubs.forEach(function(d) { 
+              const isCurrent = d.detailPath === detail.detailPath;
+            %>
+              <a href="/detail/<%= encodeURIComponent(d.detailPath) %>" class="dub-pill <%= isCurrent ? 'active' : '' %>">
+                <%= d.language %> <%= d.isOriginal ? '(Original)' : '' %>
+              </a>
+            <% }); %>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Subtitles info -->
+      <% if (detail.subtitles && detail.subtitles.length > 0) { %>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">
+          <i class="fa-solid fa-closed-captioning"></i> Subtitle: <span class="text-slate-300"><%= detail.subtitles.slice(0, 8).join(', ') %></span>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<!-- Seasons & Episodes Section (Server-Side Rendered!) -->
+<% if (isEpisodic && detail.resource && detail.resource.seasons && detail.resource.seasons.length > 0) { %>
+  <section class="seasons-section">
+    <div class="section-header">
+      <div class="section-title-wrap">
+        <div class="section-title-bar"></div>
+        <h2 class="section-title"><%= isShortDrama ? 'Daftar Episode Drama Pendek' : 'Daftar Episode' %></h2>
+      </div>
+    </div>
+
+    <!-- Season Tabs -->
+    <div class="season-tabs" id="seasonTabs">
+      <% detail.resource.seasons.forEach(function(s, idx) { %>
+        <button class="season-tab <%= idx === 0 ? 'active' : '' %>" onclick="switchSeasonSSR(<%= idx %>)">
+          <%= isShortDrama ? 'Episode' : `Season ${s.seasonNumber || idx + 1}` %>
+        </button>
+      <% }); %>
+    </div>
+
+    <!-- Episodes Grids (One container per season) -->
+    <% detail.resource.seasons.forEach(function(s, idx) { 
+      const epList = s.allEpisodes || [1];
+      const seNum = s.seasonNumber || idx + 1;
+    %>
+      <div class="episodes-grid season-grid-pane" id="seasonGrid-<%= idx %>" style="<%= idx === 0 ? 'display: grid;' : 'display: none;' %>">
+        <% epList.forEach(function(ep) { 
+          const playUrl = `/play/${encodeURIComponent(detail.detailPath)}/${ep}/${seNum}`;
+        %>
+          <a href="<%= playUrl %>" class="episode-card">
+            <div class="episode-number"><%= ep %></div>
+            <div class="episode-label">EP <%= ep %></div>
+          </a>
+        <% }); %>
+      </div>
+    <% }); %>
+  </section>
+<% } %>
+
+<!-- Trailer Modal (Accessible Dialog Pattern) -->
+<div id="trailerModal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="trailerModalTitle"
+  style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 500; align-items: center; justify-content: center; padding: 1.5rem; backdrop-filter: blur(8px);"
+  onclick="if (event.target === this) closeTrailerModal();">
+  <div style="position: relative; width: 100%; max-width: 900px; background: #121218; border-radius: 16px; overflow: hidden; border: 1px solid var(--border-subtle); box-shadow: 0 25px 60px rgba(0,0,0,0.95); animation: slideUpFade 0.3s ease;">
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-subtle);">
+      <h4 id="trailerModalTitle" style="font-size: 1rem; font-weight: 700; color: #fff;">Trailer Resmi</h4>
+      <button id="trailerCloseBtn" onclick="closeTrailerModal()" aria-label="Tutup Trailer" style="background: none; border: none; color: var(--text-secondary); font-size: 1.25rem; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 6px; transition: color 0.2s;">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div style="position: relative; width: 100%; aspect-ratio: 16/9; background: #000;">
+      <video id="trailerVideo" controls playsinline style="width: 100%; height: 100%; object-fit: contain;"></video>
+    </div>
+  </div>
+</div>
+
+<script>
+  let previousFocusElement = null;
+
+  function switchSeasonSSR(index) {
+    document.querySelectorAll('.season-tab').forEach((t, i) => {
+      t.classList.toggle('active', i === index);
+    });
+    document.querySelectorAll('.season-grid-pane').forEach((pane, i) => {
+      pane.style.display = i === index ? 'grid' : 'none';
+    });
+  }
+
+  function openTrailerModal(videoUrl, title) {
+    const modal = document.getElementById('trailerModal');
+    const video = document.getElementById('trailerVideo');
+    const titleElem = document.getElementById('trailerModalTitle');
+    const closeBtn = document.getElementById('trailerCloseBtn');
+    if (modal && video) {
+      previousFocusElement = document.activeElement;
+      titleElem.textContent = `Trailer: ${title}`;
+      video.src = videoUrl;
+      modal.style.display = 'flex';
+      video.play().catch(() => {});
+      if (closeBtn) closeBtn.focus();
+    }
+  }
+
+  function closeTrailerModal() {
+    const modal = document.getElementById('trailerModal');
+    const video = document.getElementById('trailerVideo');
+    if (modal) modal.style.display = 'none';
+    if (video) { video.pause(); video.src = ''; }
+    if (previousFocusElement && typeof previousFocusElement.focus === 'function') {
+      previousFocusElement.focus();
+      previousFocusElement = null;
+    }
+  }
+
+  // Keyboard accessibility: Escape key closes modal
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('trailerModal');
+      if (modal && modal.style.display === 'flex') {
+        closeTrailerModal();
+      }
+    }
+  });
+</script>
+
+<%- include('partials/footer') %>

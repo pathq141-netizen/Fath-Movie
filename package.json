@@ -1,0 +1,35 @@
+{
+  "name": "movienas",
+  "version": "1.0.0",
+  "description": "MovieNas - Website Streaming Movie & Series Full-Stack (Node.js + Express, Vercel Serverless Ready)",
+  "main": "server.js",
+  "scripts": {
+    "dev": "next dev -p 4000",
+    "build": "next build",
+    "start": "next start -p 4000",
+    "server": "node server.js"
+  },
+  "keywords": [
+    "movienas",
+    "themoviebox",
+    "streaming",
+    "movie",
+    "series",
+    "express",
+    "vercel"
+  ],
+  "author": "Nanas",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "ejs": "^6.0.1",
+    "express": "^4.19.2",
+    "next": "^14.2.35",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "clean-css": "^5.3.3",
+    "terser": "^5.51.2"
+  }
+}

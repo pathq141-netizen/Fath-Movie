@@ -1,0 +1,221 @@
+<%- include('partials/header', { 
+  pageTitle: 'FathMovie — Nonton Film & Series Subtitle Indonesia Gratis',
+  metaDescription: heroItem ? `Nonton ${heroItem.title} dan ribuan film & series lainnya dengan sub Indo kualitas HD di FathMovie.` : 'Streaming film & series sub Indo terlengkap.',
+  ogImage: 'https://www.gobox.my.id/file/swLU7OEx9HJk.png',
+  ogType: 'website',
+  activeNav: 'home'
+}) %>
+
+<% if (heroItem) { 
+  const subType = Number(heroItem.subjectType) || 1;
+  const isShortDrama = subType === 7 || heroItem.typeLabel === 'Short Drama';
+  const isSeries = subType === 2 || heroItem.typeLabel === 'Series';
+  const isEpisodic = isSeries || isShortDrama;
+  const bgImg = heroItem.stillsUrl || heroItem.coverUrl;
+%>
+  <!-- Hero Banner (Server-Side Rendered) -->
+  <section class="hero" id="heroBanner" style="background-image: url('<%= bgImg %>');">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-badge-row">
+        <span class="badge badge-brand"><i class="fa-solid fa-bolt"></i> TRENDING #1</span>
+        <span class="badge <%= isShortDrama ? 'badge-type-shortdrama' : (isSeries ? 'badge-type-series' : 'badge-type-movie') %>">
+          <%= isShortDrama ? 'Short Drama' : (isSeries ? 'Series' : 'Movie') %>
+        </span>
+        <span class="badge badge-rating">
+          <i class="fa-solid fa-star"></i>
+          <span><%= heroItem.imdbRating || '8.5' %></span>
+        </span>
+        <span class="badge badge-quality">Full HD</span>
+        <span class="badge badge-meta"><%= heroItem.year || (heroItem.releaseDate ? heroItem.releaseDate.split('-')[0] : '2024') %></span>
+        <span class="badge badge-meta">
+          <% if (isEpisodic) { %>
+            <i class="fa-solid fa-list-ol"></i> <%= heroItem.totalEpisodes ? `${heroItem.totalEpisodes} Episode` : (isShortDrama ? 'Drama Pendek' : 'Series') %>
+          <% } else { %>
+            <i class="fa-solid fa-clock"></i> <%= heroItem.durationFormatted || 'Film' %>
+          <% } %>
+        </span>
+      </div>
+
+      <h1 class="hero-title"><%= heroItem.title %></h1>
+      
+      <% if (heroItem.genre && heroItem.genre.length > 0) { %>
+        <div class="hero-genres">
+          <% heroItem.genre.slice(0, 4).forEach(function(g) { %>
+            <span class="genre-chip"><%= g %></span>
+          <% }); %>
+        </div>
+      <% } %>
+
+      <p class="hero-desc"><%= heroItem.description || 'Streaming film dan series pilihan berkualitas tinggi.' %></p>
+
+      <div class="hero-actions">
+        <% 
+          const heroPlayUrl = isEpisodic 
+            ? `/play/${encodeURIComponent(heroItem.detailPath)}/1/1` 
+            : `/play/${encodeURIComponent(heroItem.detailPath)}`; 
+        %>
+        <a href="<%= heroPlayUrl %>" class="btn btn-primary">
+          <i class="fa-solid fa-play"></i> Putar Sekarang
+        </a>
+        <a href="/detail/<%= encodeURIComponent(heroItem.detailPath) %>" class="btn btn-secondary">
+          <i class="fa-solid fa-circle-info"></i> Info Lengkap
+        </a>
+        <button class="btn btn-secondary"
+          data-path="<%= heroItem.detailPath %>"
+          data-title="<%= heroItem.title %>"
+          data-cover="<%= heroItem.coverUrl %>"
+          data-type="<%= heroItem.typeLabel %>"
+          data-rating="<%= heroItem.imdbRating %>"
+          data-year="<%= heroItem.year %>"
+          onclick="toggleWatchlistFromButton(this)">
+          <i class="fa-solid fa-plus"></i> Watchlist
+        </button>
+      </div>
+    </div>
+  </section>
+<% } %>
+
+<!-- Main Content Container -->
+<main class="main-container">
+
+  <!-- Continue Watching Section (LocalStorage) -->
+  <section class="content-section" id="continueWatchingSection" style="display: none;">
+    <div class="section-header">
+      <div class="section-title-wrap">
+        <div class="section-title-bar"></div>
+        <h2 class="section-title">Lanjutkan Menonton</h2>
+        <span class="section-subtitle">Tersimpan otomatis</span>
+      </div>
+      <button onclick="StreamBoxApp.clearHistory()" class="btn btn-secondary" style="padding: 0.35rem 0.85rem; font-size: 0.75rem;">
+        <i class="fa-solid fa-trash-can"></i> Hapus Riwayat
+      </button>
+    </div>
+    <div class="carousel-track" id="continueWatchingTrack">
+      <!-- Injected by client app.js -->
+    </div>
+  </section>
+
+  <!-- Watchlist Section (LocalStorage) -->
+  <section class="content-section" id="watchlistSection" style="display: none;">
+    <div class="section-header">
+      <div class="section-title-wrap">
+        <div class="section-title-bar"></div>
+        <h2 class="section-title" id="watchlist">Watchlist Saya</h2>
+        <span class="section-subtitle">Favorit pilihanmu</span>
+      </div>
+    </div>
+    <div class="carousel-track" id="watchlistTrack">
+      <!-- Injected by client app.js -->
+    </div>
+  </section>
+
+  <!-- Recommendation Carousels (Fetched directly from themoviebox.xyz/id) -->
+  <% if (typeof categories !== 'undefined' && categories && categories.length > 0) { %>
+    <% categories.forEach(function(cat, cIdx) { %>
+      <section class="content-section" id="<%= cIdx === 0 ? 'trending' : ('cat-' + cIdx) %>">
+        <div class="section-header">
+          <div class="section-title-wrap">
+            <div class="section-title-bar"></div>
+            <h2 class="section-title"><%= cat.title %></h2>
+            <span class="section-subtitle">Rekomendasi Pilihan</span>
+          </div>
+          <div class="carousel-controls">
+            <button class="carousel-btn" onclick="document.getElementById('track-cat-<%= cIdx %>').scrollBy({ left: -450, behavior: 'smooth' })" title="Geser Kiri">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button class="carousel-btn" onclick="document.getElementById('track-cat-<%= cIdx %>').scrollBy({ left: 450, behavior: 'smooth' })" title="Geser Kanan">
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+        <div class="carousel-track" id="track-cat-<%= cIdx %>">
+          <% (cat.items || []).slice(0, 12).forEach(function(item) { %>
+            <%- include('partials/card', { item: item }) %>
+          <% }); %>
+        </div>
+      </section>
+    <% }); %>
+  <% } else if (typeof trending !== 'undefined' && trending && trending.length > 0) { %>
+    <!-- Fallback if categories are not available -->
+    <section class="content-section" id="trending">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <div class="section-title-bar"></div>
+          <h2 class="section-title">Trending Sekarang</h2>
+          <span class="section-subtitle">Paling banyak ditonton</span>
+        </div>
+        <div class="carousel-controls">
+          <button class="carousel-btn" onclick="document.getElementById('trendingTrack').scrollBy({ left: -450, behavior: 'smooth' })" title="Geser Kiri">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+          <button class="carousel-btn" onclick="document.getElementById('trendingTrack').scrollBy({ left: 450, behavior: 'smooth' })" title="Geser Kanan">
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+      <div class="carousel-track" id="trendingTrack">
+        <% trending.forEach(function(item) { %>
+          <%- include('partials/card', { item: item }) %>
+        <% }); %>
+      </div>
+    </section>
+  <% } %>
+
+</main>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Sync localStorage sections
+    renderContinueWatchingSSR();
+    renderWatchlistSectionSSR();
+    window.addEventListener('history-updated', renderContinueWatchingSSR);
+    window.addEventListener('watchlist-updated', renderWatchlistSectionSSR);
+  });
+
+  function renderContinueWatchingSSR() {
+    const sec = document.getElementById('continueWatchingSection');
+    const track = document.getElementById('continueWatchingTrack');
+    if (!sec || !track) return;
+    const history = StreamBoxApp.getHistory();
+    if (history.length === 0) {
+      sec.style.display = 'none';
+      return;
+    }
+    sec.style.display = 'block';
+    track.innerHTML = history.map(item => {
+      const playUrl = item.isMovie 
+        ? `/play/${encodeURIComponent(item.detailPath)}`
+        : `/play/${encodeURIComponent(item.detailPath)}/${item.episode || 1}/${item.season || 1}`;
+      const epText = item.isMovie ? 'Film' : `S${item.season || 1} E${item.episode || 1}`;
+      return `
+        <div class="cw-card" onclick="window.location.href='${playUrl}'">
+          <div class="cw-thumb">
+            <img src="${item.coverUrl || ''}" alt="${item.title}" />
+            <div class="cw-play-overlay"><i class="fa-solid fa-circle-play"></i></div>
+            <div class="cw-progress-bar"><div class="cw-progress-fill" style="width: ${item.percent || 0}%"></div></div>
+          </div>
+          <div class="cw-info">
+            <h4 class="cw-title">${item.title}</h4>
+            <p class="cw-episode">${epText} • ${StreamBoxApp.formatTime(item.currentTime)}</p>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderWatchlistSectionSSR() {
+    const sec = document.getElementById('watchlistSection');
+    const track = document.getElementById('watchlistTrack');
+    if (!sec || !track) return;
+    const wl = StreamBoxApp.getWatchlist();
+    if (wl.length === 0) {
+      sec.style.display = 'none';
+      return;
+    }
+    sec.style.display = 'block';
+    track.innerHTML = wl.map(item => StreamBoxApp.createPosterCard(item)).join('');
+  }
+</script>
+
+<%- include('partials/footer') %>
