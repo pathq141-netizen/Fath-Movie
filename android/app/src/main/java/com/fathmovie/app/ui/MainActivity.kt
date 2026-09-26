@@ -685,7 +685,7 @@ class MainActivity : AppCompatActivity() {
                 getSharedPreferences("movienas_prefs", MODE_PRIVATE)
                     .edit().putBoolean("support_dont_show", true).apply()
             }
-            val url = "https://whatsapp.com/channel/0029VbCsS2r2phHIV3O0nO1a"
+            val url = "https://whatsapp.com/channel/0029VbFXLg96LwHhyiQxLy1a"
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
             dialog.dismiss()
         }
